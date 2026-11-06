@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import AdminNotifications from '@/components/AdminNotifications';
-import { LayoutDashboard, Car, ArrowDownCircle, ArrowUpCircle, Users, LogOut, Menu, X, Info, Route } from 'lucide-react';
+import { LayoutDashboard, Car, ArrowDownCircle, ArrowUpCircle, Users, LogOut, Menu, X, Info, Route, QrCode } from 'lucide-react';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminRecharges from '@/pages/admin/AdminRecharges';
 import AdminWithdrawals from '@/pages/admin/AdminWithdrawals';
 import AdminCars from '@/pages/admin/AdminCars';
 import AdminUsers from '@/pages/admin/AdminUsers';
 import AdminRoutes from '@/pages/admin/AdminRoutes';
+import AdminPaymentMethods from '@/pages/admin/AdminPaymentMethods';
 
-type AdminTab = 'dashboard' | 'recharges' | 'withdrawals' | 'cars' | 'routes' | 'users';
+type AdminTab = 'dashboard' | 'recharges' | 'withdrawals' | 'cars' | 'routes' | 'users' | 'payments';
 
 export default function AdminApp({ onShowAbout }: { onShowAbout: () => void }) {
   const { signOut } = useAuth();
@@ -23,6 +24,7 @@ export default function AdminApp({ onShowAbout }: { onShowAbout: () => void }) {
     { id: 'cars', label: 'Car Management', icon: <Car className="w-5 h-5" /> },
     { id: 'routes', label: 'Fleet Routes', icon: <Route className="w-5 h-5" /> },
     { id: 'users', label: 'User Logs', icon: <Users className="w-5 h-5" /> },
+    { id: 'payments', label: 'Payment Methods', icon: <QrCode className="w-5 h-5" /> },
   ];
 
   return (
@@ -107,6 +109,7 @@ export default function AdminApp({ onShowAbout }: { onShowAbout: () => void }) {
           {tab === 'cars' && <AdminCars />}
           {tab === 'routes' && <AdminRoutes />}
           {tab === 'users' && <AdminUsers />}
+          {tab === 'payments' && <AdminPaymentMethods />}
         </main>
       </div>
     </div>

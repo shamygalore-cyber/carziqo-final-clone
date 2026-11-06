@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Profile, AuditLog, Investment, RechargeLog, WithdrawalLog, formatCurrency, formatDate } from '@/lib/types';
-import { Users, Activity, Search, TrendingUp, ArrowDownCircle, ArrowUpCircle, Briefcase, Pause, Play, Pencil, Trash2 } from 'lucide-react';
+import { Users, Activity, Search, TrendingUp, ArrowDownCircle, ArrowUpCircle, Briefcase, Pause, Play, Pencil, Trash2, Wallet, Check, X, AlertCircle } from 'lucide-react';
 import AdminInvestmentModal from '@/components/AdminInvestmentModal';
 
 export default function AdminUsers() {
@@ -17,6 +17,7 @@ export default function AdminUsers() {
   } | null>(null);
   const [manageInvestment, setManageInvestment] = useState<Investment | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [showWalletEdit, setShowWalletEdit] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -52,7 +53,7 @@ export default function AdminUsers() {
     const payload: Record<string, unknown> = { p_investment_id: inv.id, p_action: action };
     const { error: rpcError } = await supabase.rpc('admin_manage_investment', payload);
     if (rpcError) {
-      setActionError('That action could not be completed. Please try again.');
+      setActionError(rpcError.message || 'That action could not be completed. Please try again.');
       return;
     }
     if (selectedUser) await loadUserDetails(selectedUser);
@@ -159,9 +160,15 @@ export default function AdminUsers() {
             <div className="p-5 space-y-6">
               {/* Balance */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#0a0e1a] rounded-xl p-4">
+                <div className="bg-[#0a0e1a] rounded-xl p-4 relative">
                   <p className="text-gray-400 text-xs mb-1">Wallet Balance</p>
                   <p className="text-white text-xl font-bold">{formatCurrency(Number(selectedUser.wallet_balance))}</p>
+                  <button
+                    onClick={() => setShowWalletEdit(true)}
+                    className="absolute top-3 right-3 flex items-center gap-1 text-blue-400 text-xs hover:text-blue-300"
+                  >
+                    <Wallet className="w-3.5 h-3.5" /> Edit
+                  </button>
                 </div>
                 <div className="bg-[#0a0e1a] rounded-xl p-4">
                   <p className="text-gray-400 text-xs mb-1">Active Rentals</p>
@@ -271,6 +278,19 @@ export default function AdminUsers() {
         </div>
       )}
 
+      {/* Wallet edit modal */}
+      {showWalletEdit && selectedUser && (
+        <WalletEditModal
+          user={selectedUser}
+          onClose={() => setShowWalletEdit(false)}
+          onSaved={() => {
+            setShowWalletEdit(false);
+            loadUsers();
+            loadUserDetails({ ...selectedUser, wallet_balance: 0 });
+          }}
+        />
+      )}
+
       {manageInvestment && selectedUser && (
         <AdminInvestmentModal
           investment={manageInvestment}
@@ -278,6 +298,118 @@ export default function AdminUsers() {
           onSaved={() => { setManageInvestment(null); loadUserDetails(selectedUser); }}
         />
       )}
+    </div>
+  );
+}
+
+function WalletEditModal({
+  user,
+  onClose,
+  onSaved,
+}: {
+  user: Profile;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [newBalance, setNewBalance] = useState(String(user.wallet_balance));
+  const [reason, setReason] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSave() {
+    const amt = parseFloat(newBalance);
+    if (isNaN(amt) || amt < 0) {
+      setError('Enter a valid non-negative amount');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+
+    const { error: rpcError } = await supabase.rpc('admin_adjust_wallet', {
+      p_user_id: user.id,
+      p_new_balance: amt,
+      p_reason: reason.trim() || null,
+    });
+
+    if (rpcError) {
+      setError(rpcError.message || 'Could not update wallet. Please try again.');
+      setSaving(false);
+      return;
+    }
+
+    onSaved();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#131825] rounded-t-2xl sm:rounded-2xl border border-[#232a3f] p-5 w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <Wallet className="w-5 h-5 text-blue-400" /> Edit Wallet
+          </h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="bg-[#0a0e1a] rounded-xl p-3 mb-4">
+          <p className="text-gray-400 text-xs">User</p>
+          <p className="text-white text-sm font-medium">{user.full_name}</p>
+          <p className="text-gray-500 text-xs">{user.phone || 'No phone'}</p>
+          <div className="mt-2 pt-2 border-t border-[#232a3f]">
+            <p className="text-gray-400 text-xs">Current Balance</p>
+            <p className="text-emerald-400 text-lg font-bold">{formatCurrency(Number(user.wallet_balance))}</p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm mb-4 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
+          </div>
+        )}
+
+        <label className="text-sm font-medium text-gray-300 mb-2 block">New Balance</label>
+        <input
+          type="number"
+          value={newBalance}
+          onChange={(e) => setNewBalance(e.target.value)}
+          className="w-full bg-[#0a0e1a] border border-[#232a3f] rounded-xl px-4 py-3 text-white text-lg font-bold focus:border-blue-500 outline-none mb-4"
+          placeholder="0.00"
+          min="0"
+          step="0.01"
+        />
+
+        <label className="text-sm font-medium text-gray-300 mb-2 block">Reason (optional)</label>
+        <input
+          type="text"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          className="w-full bg-[#0a0e1a] border border-[#232a3f] rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none mb-5"
+          placeholder="e.g. Bonus credit, correction..."
+        />
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="px-5 py-3 rounded-xl bg-[#0a0e1a] border border-[#232a3f] text-gray-400 font-medium hover:text-white transition-all"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex-1 gradient-primary text-white font-semibold py-3 rounded-xl transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {saving ? 'Saving...' : <><Check className="w-5 h-5" /> Save Balance</>}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
