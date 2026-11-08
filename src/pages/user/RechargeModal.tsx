@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { PaymentMethod, formatCurrency } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { X, Upload, QrCode, Check, AlertCircle } from 'lucide-react';
 
 export default function RechargeModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [step, setStep] = useState<'amount' | 'payment' | 'proof'>('amount');
   const [amount, setAmount] = useState('');
@@ -46,11 +48,11 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
     if (!session || !selectedMethod) return;
     const amt = parseFloat(amount);
     if (amt <= 0) {
-      setError('Enter a valid amount');
+      setError(t('recharge.enterValid'));
       return;
     }
     if (amt > 100000) {
-      setError('Maximum recharge is ₱100,000 per request');
+      setError(t('recharge.maxAmount'));
       return;
     }
     setSubmitting(true);
@@ -90,8 +92,8 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
           <div className="w-16 h-16 gradient-accent rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Recharge Submitted!</h3>
-          <p className="text-gray-400 text-sm">Your deposit is pending admin approval. You'll be notified once verified.</p>
+          <h3 className="text-xl font-bold text-white mb-2">{t('recharge.success')}</h3>
+          <p className="text-gray-400 text-sm">{t('recharge.successDesc')}</p>
         </div>
       </Overlay>
     );
@@ -101,7 +103,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
     <Overlay onClose={onClose}>
       <div className="animate-slide-up">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-white">Recharge Wallet</h3>
+          <h3 className="text-lg font-bold text-white">{t('recharge.title')}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             <X className="w-5 h-5" />
           </button>
@@ -112,6 +114,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
           {['Amount', 'Payment', 'Proof'].map((label, i) => {
             const stepIdx = ['amount', 'payment', 'proof'].indexOf(step);
             const active = i <= stepIdx;
+            const labels = [t('recharge.amount'), t('recharge.payment'), t('recharge.proof')];
             return (
               <div key={label} className="flex items-center gap-2 flex-1">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
@@ -119,7 +122,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
                 }`}>
                   {i + 1}
                 </div>
-                <span className={`text-xs ${active ? 'text-white' : 'text-gray-500'}`}>{label}</span>
+                <span className={`text-xs ${active ? 'text-white' : 'text-gray-500'}`}>{labels[i]}</span>
                 {i < 2 && <div className={`flex-1 h-0.5 ${active ? 'bg-blue-500' : 'bg-[#232a3f]'}`} />}
               </div>
             );
@@ -135,7 +138,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
         {/* Step 1: Amount */}
         {step === 'amount' && (
           <div className="animate-fade-in">
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Enter Amount (₱,€,$)</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t('recharge.enterAmount')}</label>
             <input
               type="number"
               value={amount}
@@ -162,7 +165,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
               disabled={!amount || parseFloat(amount) <= 0 || parseFloat(amount) > 100000}
               className="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl mt-5 transition-all hover:opacity-90 disabled:opacity-50"
             >
-              Continue
+              {t('recharge.continue')}
             </button>
           </div>
         )}
@@ -170,7 +173,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
         {/* Step 2: Payment method */}
         {step === 'payment' && (
           <div className="animate-fade-in">
-            <p className="text-sm text-gray-400 mb-3">Select a payment method:</p>
+            <p className="text-sm text-gray-400 mb-3">{t('recharge.selectMethod')}</p>
             <div className="space-y-2 mb-5">
               {methods.map((m) => (
                 <button
@@ -202,14 +205,14 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
                 onClick={() => setStep('amount')}
                 className="px-5 py-3 rounded-xl bg-[#0a0e1a] border border-[#232a3f] text-gray-400 font-medium hover:text-white transition-all"
               >
-                Back
+                {t('recharge.back')}
               </button>
               <button
                 onClick={() => setStep('proof')}
                 disabled={!selectedMethod}
                 className="flex-1 gradient-primary text-white font-semibold py-3 rounded-xl transition-all hover:opacity-90 disabled:opacity-50"
               >
-                Continue
+                {t('recharge.continue')}
               </button>
             </div>
           </div>
@@ -227,7 +230,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
             <p className="text-gray-400 text-xs mb-4 leading-relaxed">{selectedMethod.instructions}</p>
 
             {/* Reference number */}
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Transaction Reference Number</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t('recharge.transactionRef')}</label>
             <input
               type="text"
               value={reference}
@@ -237,7 +240,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
             />
 
             {/* Proof upload */}
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Upload Payment Screenshot</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t('recharge.uploadScreenshot')}</label>
             <div className="mb-4">
               {proofUrl ? (
                 <div className="relative rounded-xl overflow-hidden border border-emerald-500/30">
@@ -257,7 +260,7 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
                     ) : (
                       <Upload className="w-6 h-6 text-gray-500" />
                     )}
-                    <span className="text-gray-500 text-sm">{uploading ? 'Uploading...' : 'Click to upload receipt'}</span>
+                    <span className="text-gray-500 text-sm">{uploading ? t('recharge.uploading') : t('recharge.clickToUpload')}</span>
                   </div>
                   <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
                 </label>
@@ -269,14 +272,14 @@ export default function RechargeModal({ onClose, onSuccess }: { onClose: () => v
                 onClick={() => setStep('payment')}
                 className="px-5 py-3 rounded-xl bg-[#0a0e1a] border border-[#232a3f] text-gray-400 font-medium hover:text-white transition-all"
               >
-                Back
+                {t('recharge.back')}
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={submitting || !proofUrl}
                 className="flex-1 gradient-primary text-white font-semibold py-3 rounded-xl transition-all hover:opacity-90 disabled:opacity-50"
               >
-                {submitting ? 'Submitting...' : 'Submit Recharge'}
+                {submitting ? t('recharge.submitting') : t('recharge.submitRecharge')}
               </button>
             </div>
           </div>

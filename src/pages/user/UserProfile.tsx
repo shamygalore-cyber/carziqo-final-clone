@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { supabase } from '@/lib/supabase';
+import { LANGUAGES } from '@/lib/i18n';
 import {
   RechargeLog,
   WithdrawalLog,
@@ -41,6 +43,7 @@ const METHOD_COLORS: Record<WithdrawalMethod, string> = {
 
 export default function UserProfile() {
   const { profile, session, refreshProfile, signOut } = useAuth();
+  const { t } = useI18n();
   const [tab, setTab] = useState<'profile' | 'preferences' | 'wallets' | 'security' | 'referral' | 'history'>('profile');
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
@@ -59,7 +62,7 @@ export default function UserProfile() {
   const [showAddWallet, setShowAddWallet] = useState(false);
   const [copied, setCopied] = useState(false);
   const [themeColor, setThemeColor] = useState<Profile['theme_color']>(profile?.theme_color || 'blue');
-  const [language, setLanguage] = useState<Profile['language']>(profile?.language || 'en');
+  const [language, setLanguage] = useState<string>(profile?.language || 'en');
   const [notifSound, setNotifSound] = useState<boolean>(profile?.notif_sound ?? true);
   const [avatarFrame, setAvatarFrame] = useState<NonNullable<Profile['avatar_frame']>>(profile?.avatar_frame || 'none');
   const [currency, setCurrency] = useState<CurrencyCode>(profile?.currency || 'PHP');
@@ -304,7 +307,7 @@ export default function UserProfile() {
           </div>
         </div>
         <div className="mt-4 w-full">
-          <p className="text-gray-300 text-xs font-semibold text-center mb-2 flex items-center justify-center gap-1.5"><Frame className="w-3.5 h-3.5 text-blue-400" /> Avatar Frame</p>
+          <p className="text-gray-300 text-xs font-semibold text-center mb-2 flex items-center justify-center gap-1.5"><Frame className="w-3.5 h-3.5 text-blue-400" /> {t('profile.avatarFrame')}</p>
           <div className="grid grid-cols-4 gap-2">
             {(Object.keys(AVATAR_FRAMES) as Array<NonNullable<Profile['avatar_frame']>>).map((frameKey) => {
               const frame = AVATAR_FRAMES[frameKey];
@@ -337,11 +340,11 @@ export default function UserProfile() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all capitalize whitespace-nowrap ${
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
               tab === t ? 'gradient-primary text-white' : 'text-gray-400 hover:text-white'
             }`}
           >
-            {t}
+            {t(`profile.${t}`)}
           </button>
         ))}
       </div>
@@ -349,7 +352,7 @@ export default function UserProfile() {
       {/* Profile tab */}
       {tab === 'profile' && (
         <div className="space-y-4 animate-fade-in">
-          <FormField label="Full Name" icon={<User className="w-4 h-4" />}>
+          <FormField label={t('profile.fullName')} icon={<User className="w-4 h-4" />}>
             <input
               type="text"
               value={fullName}
@@ -357,7 +360,7 @@ export default function UserProfile() {
               className="form-input"
             />
           </FormField>
-          <FormField label="Email" icon={<Mail className="w-4 h-4" />}>
+          <FormField label={t('profile.email')} icon={<Mail className="w-4 h-4" />}>
             <input
               type="email"
               value={session?.user.email || ''}
@@ -365,7 +368,7 @@ export default function UserProfile() {
               className="form-input opacity-50 cursor-not-allowed"
             />
           </FormField>
-          <FormField label="Phone" icon={<Phone className="w-4 h-4" />}>
+          <FormField label={t('profile.phone')} icon={<Phone className="w-4 h-4" />}>
             <input
               type="tel"
               value={phone}
@@ -379,7 +382,7 @@ export default function UserProfile() {
             disabled={saving}
             className="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {saved ? <><Check className="w-5 h-5" /> Saved!</> : saving ? 'Saving...' : 'Save Changes'}
+            {saved ? <><Check className="w-5 h-5" /> {t('profile.saved')}</> : saving ? t('profile.saving') : t('profile.saveChanges')}
           </button>
         </div>
       )}
@@ -390,9 +393,9 @@ export default function UserProfile() {
           <div className="bg-[#131825] rounded-xl border border-[#232a3f] p-4">
             <div className="flex items-center gap-2 mb-3">
               <Palette className="w-4 h-4 text-blue-400" />
-              <h3 className="text-white font-semibold text-sm">Theme Accent</h3>
+              <h3 className="text-white font-semibold text-sm">{t('profile.themeAccent')}</h3>
             </div>
-            <p className="text-gray-500 text-xs mb-3">Choose the accent color used across your app highlights.</p>
+            <p className="text-gray-500 text-xs mb-3">{t('profile.chooseAccent')}</p>
             <div className="grid grid-cols-3 gap-2">
               {(Object.keys(THEME_COLORS) as Array<Profile['theme_color']>).map((colorKey) => {
                 const color = THEME_COLORS[colorKey];
@@ -414,17 +417,19 @@ export default function UserProfile() {
           <div className="bg-[#131825] rounded-xl border border-[#232a3f] p-4">
             <div className="flex items-center gap-2 mb-3">
               <Globe className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-white font-semibold text-sm">Language</h3>
+              <h3 className="text-white font-semibold text-sm">{t('profile.language')}</h3>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {([['en', 'English'], ['fil', 'Filipino']] as const).map(([code, label]) => (
+            <p className="text-gray-500 text-xs mb-3">{t('profile.chooseAccent')}</p>
+            <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
+              {LANGUAGES.map((lang) => (
                 <button
-                  key={code}
+                  key={lang.code}
                   type="button"
-                  onClick={() => setLanguage(code)}
-                  className={`rounded-xl py-3 text-sm font-medium transition-all ${language === code ? 'gradient-primary text-white' : 'bg-[#0a0e1a] text-gray-400 border border-[#232a3f] hover:text-white'}`}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`rounded-xl py-2.5 text-sm font-medium transition-all flex items-center gap-1.5 justify-center ${language === lang.code ? 'gradient-primary text-white' : 'bg-[#0a0e1a] text-gray-400 border border-[#232a3f] hover:text-white'}`}
                 >
-                  {label}
+                  <span className="text-base">{lang.flag}</span>
+                  <span className="truncate">{lang.label}</span>
                 </button>
               ))}
             </div>
@@ -433,9 +438,9 @@ export default function UserProfile() {
           <div className="bg-[#131825] rounded-xl border border-[#232a3f] p-4">
             <div className="flex items-center gap-2 mb-3">
               <Coins className="w-4 h-4 text-amber-400" />
-              <h3 className="text-white font-semibold text-sm">Display Currency</h3>
+              <h3 className="text-white font-semibold text-sm">{t('profile.displayCurrency')}</h3>
             </div>
-            <p className="text-gray-500 text-xs mb-3">Amounts across the app will show in your chosen currency.</p>
+            <p className="text-gray-500 text-xs mb-3">{t('profile.currencyDesc')}</p>
             <div className="grid grid-cols-3 gap-2">
               {(Object.keys(CURRENCIES) as CurrencyCode[]).map((code) => {
                 const info = CURRENCIES[code];
@@ -463,8 +468,8 @@ export default function UserProfile() {
               <div className="flex items-center gap-2">
                 <Bell className="w-4 h-4 text-amber-400" />
                 <div>
-                  <h3 className="text-white font-semibold text-sm">Notification Sound</h3>
-                  <p className="text-gray-500 text-xs mt-0.5">Play a sound when in-app alerts appear</p>
+                  <h3 className="text-white font-semibold text-sm">{t('profile.notifSound')}</h3>
+                  <p className="text-gray-500 text-xs mt-0.5">{t('profile.soundDesc')}</p>
                 </div>
               </div>
               <button
@@ -477,7 +482,7 @@ export default function UserProfile() {
             </div>
             <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500">
               {notifSound ? <Volume2 className="w-3.5 h-3.5 text-emerald-400" /> : <VolumeX className="w-3.5 h-3.5 text-gray-500" />}
-              {notifSound ? 'Sound enabled' : 'Sound muted'}
+              {notifSound ? t('profile.soundEnabled') : t('profile.soundMuted')}
             </div>
           </div>
 
@@ -499,7 +504,7 @@ export default function UserProfile() {
             disabled={prefsSaving}
             className="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {prefsSaved ? <><Check className="w-5 h-5" /> Saved!</> : prefsSaving ? 'Saving...' : 'Save Preferences'}
+            {prefsSaved ? <><Check className="w-5 h-5" /> {t('profile.saved')}</> : prefsSaving ? t('profile.saving') : t('profile.savePreferences')}
           </button>
         </div>
       )}
@@ -509,14 +514,14 @@ export default function UserProfile() {
         <div className="space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-white font-bold text-sm">Withdrawal Wallets</h3>
-              <p className="text-gray-500 text-xs mt-0.5">Save your GCash, PayMaya, bank, or crypto addresses</p>
+              <h3 className="text-white font-bold text-sm">{t('profile.withdrawalWallets')}</h3>
+              <p className="text-gray-500 text-xs mt-0.5">{t('profile.walletsDesc')}</p>
             </div>
             <button
               onClick={() => setShowAddWallet(true)}
               className="bg-blue-500 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors flex items-center gap-1.5"
             >
-              <Plus className="w-4 h-4" /> Add
+              <Plus className="w-4 h-4" /> {t('profile.add')}
             </button>
           </div>
 
@@ -526,8 +531,8 @@ export default function UserProfile() {
               className="w-full bg-[#0a0e1a] border border-dashed border-[#232a3f] rounded-xl py-8 text-center hover:border-blue-500 transition-colors"
             >
               <Wallet className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">No wallets saved yet</p>
-              <p className="text-gray-600 text-xs mt-1">Tap to add your first withdrawal wallet</p>
+              <p className="text-gray-400 text-sm">{t('profile.noWallets')}</p>
+              <p className="text-gray-600 text-xs mt-1">{t('profile.tapToAdd')}</p>
             </button>
           ) : (
             <div className="space-y-2">
@@ -545,7 +550,7 @@ export default function UserProfile() {
                         <p className="text-white font-medium text-sm truncate">{w.label}</p>
                         {w.is_default && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-medium">
-                            <Star className="w-2.5 h-2.5 fill-amber-400" /> Default
+                            <Star className="w-2.5 h-2.5 fill-amber-400" /> {t('profile.default')}
                           </span>
                         )}
                       </div>
@@ -585,7 +590,7 @@ export default function UserProfile() {
       {/* Security tab */}
       {tab === 'security' && (
         <div className="space-y-4 animate-fade-in">
-          <FormField label="New Password" icon={<Key className="w-4 h-4" />}>
+          <FormField label={t('profile.newPassword')} icon={<Key className="w-4 h-4" />}>
             <input
               type="password"
               value={newPassword}
@@ -594,7 +599,7 @@ export default function UserProfile() {
               placeholder="••••••••"
             />
           </FormField>
-          <FormField label="Confirm Password" icon={<Key className="w-4 h-4" />}>
+          <FormField label={t('profile.confirmPassword')} icon={<Key className="w-4 h-4" />}>
             <input
               type="password"
               value={confirmPassword}
@@ -610,14 +615,14 @@ export default function UserProfile() {
           )}
           {pwdSuccess && (
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg px-4 py-3 text-emerald-400 text-sm flex items-center gap-2">
-              <Check className="w-4 h-4" /> Password updated successfully!
+              <Check className="w-4 h-4" /> {t('profile.passwordUpdated')}
             </div>
           )}
           <button
             onClick={handleChangePassword}
             className="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl transition-all hover:opacity-90"
           >
-            Update Password
+            {t('profile.updatePassword')}
           </button>
         </div>
       )}
@@ -628,10 +633,10 @@ export default function UserProfile() {
           <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-3">
               <Gift className="w-5 h-5 text-blue-400" />
-              <h3 className="text-white font-bold">Your Referral Code</h3>
+              <h3 className="text-white font-bold">{t('profile.yourReferralCode')}</h3>
             </div>
             <p className="text-gray-400 text-sm mb-3">
-              Share this code with friends. Every registered referral helps you unlock higher VIP levels.
+              {t('profile.shareCode')}
             </p>
             <div className="flex items-center gap-2">
               <div className="flex-1 bg-[#0a0e1a] rounded-xl px-4 py-3 border border-[#232a3f]">
@@ -642,7 +647,7 @@ export default function UserProfile() {
                 className="bg-blue-500 text-white px-4 py-3 rounded-xl font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('profile.copied') : t('profile.copy')}
               </button>
             </div>
           </div>
@@ -650,7 +655,7 @@ export default function UserProfile() {
           <div className="bg-gradient-to-br from-amber-500/10 to-blue-500/10 rounded-xl p-4 border border-amber-400/20">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <p className="text-white font-semibold text-sm">VIP Referral Roadmap</p>
+                <p className="text-white font-semibold text-sm">{t('profile.vipRoadmap')}</p>
                 <p className="text-gray-400 text-xs mt-1">3 referrals starts VIP 1 · 12 referrals reaches VIP 10</p>
               </div>
               <Crown className="w-5 h-5 text-amber-300" />
@@ -659,31 +664,31 @@ export default function UserProfile() {
               {[1, 2, 3, 4, 5].map((level) => (
                 <div key={level} className={`rounded-lg px-2 py-2 text-center ${profile?.vip_level === level ? 'bg-amber-400/20 border border-amber-300/40' : 'bg-[#0a0e1a]/60'}`}>
                   <p className="text-amber-200 text-xs font-bold">VIP {level}</p>
-                  <p className="text-gray-500 text-[10px]">{level + 2} refs</p>
+                  <p className="text-gray-500 text-[10px]">{level + 2} {t('profile.refs')}</p>
                 </div>
               ))}
             </div>
-            <p className="text-gray-500 text-[10px] mt-2 text-center">VIP 6–10 continue one level per additional referral.</p>
+            <p className="text-gray-500 text-[10px] mt-2 text-center">{t('profile.vipContinue')}</p>
           </div>
 
           <div className="bg-[#131825] rounded-xl p-4 border border-[#232a3f]">
-            <h4 className="text-white font-semibold text-sm mb-2">How it works</h4>
+            <h4 className="text-white font-semibold text-sm mb-2">{t('profile.howItWorks')}</h4>
             <ul className="space-y-2 text-gray-400 text-xs">
               <li className="flex items-start gap-2">
                 <span className="text-blue-400 font-bold">1.</span>
-                Share your referral code with friends
+                {t('profile.shareCodeStep')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-400 font-bold">2.</span>
-                They enter the code when registering
+                {t('profile.enterCodeStep')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-400 font-bold">3.</span>
-                They invest in any car on the platform
+                {t('profile.investCarStep')}
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-blue-400 font-bold">4.</span>
-                You earn referral rewards as they grow
+                {t('profile.earnRewardsStep')}
               </li>
             </ul>
           </div>
@@ -696,7 +701,7 @@ export default function UserProfile() {
           {recharges.length === 0 && withdrawals.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <ArrowDownCircle className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No transaction history yet</p>
+              <p className="text-sm">{t('profile.noHistory')}</p>
             </div>
           ) : (
             <>
@@ -715,7 +720,7 @@ export default function UserProfile() {
         onClick={signOut}
         className="w-full mt-8 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 font-medium hover:bg-red-500/20 transition-all"
       >
-        Sign Out
+        {t('profile.signOut')}
       </button>
 
       {showAddWallet && session && (
@@ -753,6 +758,7 @@ export default function UserProfile() {
 }
 
 function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose: () => void; onSaved: () => void }) {
+  const { t } = useI18n();
   const [label, setLabel] = useState('');
   const [method, setMethod] = useState<WithdrawalMethod>('gcash');
   const [accountName, setAccountName] = useState('');
@@ -772,11 +778,11 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
   async function handleSave() {
     setError(null);
     if (!accountName || !accountNumber) {
-      setError('Please fill in all required fields');
+      setError(t('wallet.fillAllFields'));
       return;
     }
     if (method === 'bank' && !bankName) {
-      setError('Bank name is required for bank transfers');
+      setError(t('wallet.bankNameRequired'));
       return;
     }
 
@@ -820,7 +826,7 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
       >
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Plus className="w-5 h-5 text-blue-400" /> Add Withdrawal Wallet
+            <Plus className="w-5 h-5 text-blue-400" /> {t('wallet.addWallet')}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-white">
             <X className="w-5 h-5" />
@@ -835,7 +841,7 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
 
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Method</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t('wallet.method')}</label>
             <div className="grid grid-cols-4 gap-2">
               {methodOptions.map((opt) => (
                 <button
@@ -855,7 +861,7 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Label (optional)</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t('wallet.label')}</label>
             <input
               type="text"
               value={label}
@@ -866,7 +872,7 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
           </div>
 
           <div>
-            <label className="text-sm font-medium text-gray-300 mb-2 block">Account Name</label>
+            <label className="text-sm font-medium text-gray-300 mb-2 block">{t('wallet.accountName')}</label>
             <input
               type="text"
               value={accountName}
@@ -878,7 +884,7 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
 
           <div>
             <label className="text-sm font-medium text-gray-300 mb-2 block">
-              {method === 'crypto' ? 'Wallet Address' : method === 'bank' ? 'Account Number' : 'Mobile Number'}
+              {method === 'crypto' ? t('wallet.walletAddress') : method === 'bank' ? t('wallet.accountNumber') : t('wallet.mobileNumber')}
             </label>
             <input
               type="text"
@@ -897,13 +903,13 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
 
           {method === 'bank' && (
             <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">Bank Name</label>
+              <label className="text-sm font-medium text-gray-300 mb-2 block">{t('wallet.bankName')}</label>
               <input
                 type="text"
                 value={bankName}
                 onChange={(e) => setBankName(e.target.value)}
                 className="w-full bg-[#0a0e1a] border border-[#232a3f] rounded-xl px-4 py-3 text-white text-sm focus:border-blue-500 outline-none"
-                placeholder="e.g. BPI, BDO, Metrobank"
+                placeholder={t('wallet.bankNamePlaceholder')}
               />
             </div>
           )}
@@ -915,7 +921,7 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
               onChange={(e) => setIsDefault(e.target.checked)}
               className="w-4 h-4 rounded accent-blue-500"
             />
-            <span className="text-gray-300 text-sm">Set as default payout destination</span>
+            <span className="text-gray-300 text-sm">{t('wallet.setAsDefault')}</span>
           </label>
 
           <button
@@ -923,7 +929,7 @@ function AddWalletModal({ userId, onClose, onSaved }: { userId: string; onClose:
             disabled={saving}
             className="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-50"
           >
-            {saving ? 'Saving...' : 'Save Wallet'}
+            {saving ? t('profile.saving') : t('wallet.saveWallet')}
           </button>
         </div>
       </div>
@@ -941,6 +947,7 @@ function FormField({ label, icon, children }: { label: string; icon: React.React
 }
 
 function HistoryRow({ type, amount, status, date, detail }: { type: string; amount: number; status: string; date: string; detail: string }) {
+  const { t } = useI18n();
   const isRecharge = type === 'recharge';
   return (
     <div className="flex items-center justify-between bg-[#131825] rounded-lg px-4 py-3 border border-[#232a3f]">
@@ -951,7 +958,7 @@ function HistoryRow({ type, amount, status, date, detail }: { type: string; amou
           {isRecharge ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
         </div>
         <div>
-          <p className="text-white text-sm font-medium">{isRecharge ? 'Recharge' : 'Withdrawal'}</p>
+          <p className="text-white text-sm font-medium">{isRecharge ? t('profile.recharge') : t('profile.withdrawal')}</p>
           <p className="text-gray-500 text-xs">{detail} · {formatDate(date)}</p>
         </div>
       </div>

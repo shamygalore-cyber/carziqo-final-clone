@@ -1,4 +1,5 @@
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { Car, Home, Briefcase, User, LogOut, Gift, Leaf, Info } from 'lucide-react';
 import { useState } from 'react';
 import UserDashboard from '@/pages/user/UserDashboard';
@@ -11,14 +12,15 @@ type Tab = 'home' | 'store' | 'rentals' | 'rewards' | 'profile';
 
 export default function UserApp({ onShowAbout }: { onShowAbout: () => void }) {
   const { profile, signOut } = useAuth();
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('home');
 
   const navItems: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: 'home', label: 'Home', icon: <Home className="w-5 h-5" /> },
-    { id: 'store', label: 'Car Store', icon: <Car className="w-5 h-5" /> },
-    { id: 'rentals', label: 'Rentals', icon: <Briefcase className="w-5 h-5" /> },
-    { id: 'rewards', label: 'Rewards', icon: <Gift className="w-5 h-5" /> },
-    { id: 'profile', label: 'Profile', icon: <User className="w-5 h-5" /> },
+    { id: 'home', label: t('nav.home'), icon: <Home className="w-5 h-5" /> },
+    { id: 'store', label: t('nav.store'), icon: <Car className="w-5 h-5" /> },
+    { id: 'rentals', label: t('nav.rentals'), icon: <Briefcase className="w-5 h-5" /> },
+    { id: 'rewards', label: t('nav.rewards'), icon: <Gift className="w-5 h-5" /> },
+    { id: 'profile', label: t('nav.profile'), icon: <User className="w-5 h-5" /> },
   ];
 
   return (
@@ -30,7 +32,7 @@ export default function UserApp({ onShowAbout }: { onShowAbout: () => void }) {
             <img src="/carziqo.webp" alt="Carziqo.Ltd" className="w-9 h-9 rounded-lg object-cover bg-white" />
             <div>
               <h1 className="font-bold text-white text-sm">Carziqo.Ltd</h1>
-              <p className="text-[10px] text-gray-400">Welcome, {profile?.full_name || 'User'}</p>
+              <p className="text-[10px] text-gray-400">{t('nav.welcome')}, {profile?.full_name || 'User'}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

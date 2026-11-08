@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Car as CarType, DURATION_OPTIONS, DURATION_DAILY_RATES, FREE_CAR_DURATION_DAYS, formatCurrency } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { TrendingUp, X, Check, Calendar, DollarSign, Car as CarIcon, Gift } from 'lucide-react';
 
 export default function CarStore() {
   const { profile } = useAuth();
+  const { t } = useI18n();
   const [cars, setCars] = useState<CarType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCar, setSelectedCar] = useState<CarType | null>(null);
@@ -30,8 +32,8 @@ export default function CarStore() {
 
   return (
     <div className="animate-fade-in">
-      <h2 className="text-xl font-bold text-white mb-1">Car Store</h2>
-      <p className="text-gray-400 text-sm mb-5">Choose a car and start earning daily returns</p>
+      <h2 className="text-xl font-bold text-white mb-1">{t('store.title')}</h2>
+      <p className="text-gray-400 text-sm mb-5">{t('store.subtitle')}</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {cars.map((car) => (
@@ -73,7 +75,7 @@ function CarCard({ car, disabled, onClick }: { car: CarType; disabled: boolean; 
         </div>
         {car.is_free && (
           <div className="absolute top-3 left-3 gradient-gold text-black text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-            <Gift className="w-3 h-3" /> FREE
+            <Gift className="w-3 h-3" /> {t('dash.free')}
           </div>
         )}
       </div>
@@ -81,11 +83,11 @@ function CarCard({ car, disabled, onClick }: { car: CarType; disabled: boolean; 
         <h3 className="text-white font-semibold text-base mb-1">{car.car_name}</h3>
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-gray-400 text-xs">Rental price</p>
-            <p className="text-white font-bold text-lg">{car.is_free ? 'FREE' : formatCurrency(Number(car.price))}</p>
+            <p className="text-gray-400 text-xs">{t('store.rentalPrice')}</p>
+            <p className="text-white font-bold text-lg">{car.is_free ? t('dash.free') : formatCurrency(Number(car.price))}</p>
           </div>
           <div className="text-right">
-            <p className="text-gray-400 text-xs">Daily return</p>
+            <p className="text-gray-400 text-xs">{t('store.dailyReturn')}</p>
             <p className="text-emerald-400 font-bold text-lg">{car.is_free ? '₱1.00' : formatCurrency(Number(car.price) * DURATION_DAILY_RATES[30])}</p>
           </div>
         </div>
@@ -96,6 +98,7 @@ function CarCard({ car, disabled, onClick }: { car: CarType; disabled: boolean; 
 
 function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }) {
   const { profile, session, refreshProfile } = useAuth();
+  const { t } = useI18n();
   const [duration, setDuration] = useState<number>(car.is_free ? FREE_CAR_DURATION_DAYS : DURATION_OPTIONS[0]);
   const [amount, setAmount] = useState<string>(car.is_free ? '0' : String(car.price));
   const [submitting, setSubmitting] = useState(false);
@@ -117,23 +120,23 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
     if (!session) return;
     setError(null);
     if (!isFreeCar && invAmount <= 0) {
-      setError('Please enter a valid amount');
+      setError(t('store.enterValidAmount'));
       return;
     }
     if (isFreeCar && invAmount !== 0) {
-      setError('The free starter car does not require payment');
+      setError(t('store.freeCarNoPayment'));
       return;
     }
     if (!isFreeCar && invAmount < MIN_INVESTMENT) {
-      setError(`Minimum investment amount is ${formatCurrency(MIN_INVESTMENT)}`);
+      setError(t('store.minInvestment', { amount: formatCurrency(MIN_INVESTMENT) }));
       return;
     }
     if (invAmount > MAX_INVESTMENT) {
-      setError(`Maximum investment amount is ${formatCurrency(MAX_INVESTMENT)}`);
+      setError(t('store.maxInvestment', { amount: formatCurrency(MAX_INVESTMENT) }));
       return;
     }
     if (invAmount > balance) {
-      setError('Insufficient balance. Please recharge your wallet first.');
+      setError(t('store.insufficientBalance'));
       return;
     }
     setSubmitting(true);
@@ -163,8 +166,8 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
           <div className="w-16 h-16 gradient-accent rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">Investment Confirmed!</h3>
-          <p className="text-gray-400 text-sm">Your car rental is now active. You'll earn {formatCurrency(dailyPayout)} daily.</p>
+          <h3 className="text-xl font-bold text-white mb-2">{t('store.investmentConfirmed')}</h3>
+          <p className="text-gray-400 text-sm">{t('store.nowActive', { amount: formatCurrency(dailyPayout) })}</p>
         </div>
       </ModalOverlay>
     );
@@ -178,7 +181,7 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
             <img src={car.image_url} alt={car.car_name} className="w-16 h-16 rounded-lg object-cover" />
             <div>
               <h3 className="text-lg font-bold text-white">{car.car_name}</h3>
-              <p className="text-emerald-400 text-sm font-semibold">{isFreeCar ? 'Free starter car' : '2% (30 days) or 3% (60 days) daily return'}</p>
+              <p className="text-emerald-400 text-sm font-semibold">{isFreeCar ? t('store.freeStarterCar') : t('store.dailyReturnDesc')}</p>
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-white p-1">
@@ -189,7 +192,7 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
         {/* Investment amount */}
         <div className="mb-5">
           <label className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
-            <DollarSign className="w-4 h-4" /> {isFreeCar ? 'Starter Car Access' : 'Investment Amount'}
+            <DollarSign className="w-4 h-4" /> {isFreeCar ? t('store.starterCarAccess') : t('store.investmentAmount')}
           </label>
           <input
             type="number"
@@ -204,26 +207,26 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
             step="0.01"
           />
           <p className="text-gray-500 text-xs mt-1.5">
-            {isFreeCar ? 'This starter car is free for one user only.' : <>Available balance: {formatCurrency(balance)}<span className="ml-2">| Min: {formatCurrency(MIN_INVESTMENT)} · Max: {formatCurrency(MAX_INVESTMENT)}</span></>}
+            {isFreeCar ? t('store.thisStarterFree') : <>{t('store.availableBalance')}: {formatCurrency(balance)}<span className="ml-2">| {t('store.min')}: {formatCurrency(MIN_INVESTMENT)} · {t('store.max')}: {formatCurrency(MAX_INVESTMENT)}</span></>}
           </p>
           {!canAfford && invAmount > 0 && (
-            <p className="text-red-400 text-xs mt-1">Insufficient balance — please recharge first.</p>
+            <p className="text-red-400 text-xs mt-1">{t('store.insufficientRecharge')}</p>
           )}
           {!isFreeCar && invAmount > 0 && invAmount < MIN_INVESTMENT && (
-            <p className="text-red-400 text-xs mt-1">Minimum investment is {formatCurrency(MIN_INVESTMENT)}.</p>
+            <p className="text-red-400 text-xs mt-1">{t('store.minInvestmentShort', { amount: formatCurrency(MIN_INVESTMENT) })}</p>
           )}
           {invAmount > MAX_INVESTMENT && (
-            <p className="text-red-400 text-xs mt-1">Maximum investment is {formatCurrency(MAX_INVESTMENT)}.</p>
+            <p className="text-red-400 text-xs mt-1">{t('store.maxInvestmentShort', { amount: formatCurrency(MAX_INVESTMENT) })}</p>
           )}
         </div>
 
         {/* Duration selector */}
         <div className="mb-5">
           <label className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
-            <Calendar className="w-4 h-4" /> Rental Period
+            <Calendar className="w-4 h-4" /> {t('store.rentalPeriod')}
           </label>
           {isFreeCar ? (
-            <p className="text-gray-400 text-sm">{FREE_CAR_DURATION_DAYS} days, fixed for the starter car</p>
+            <p className="text-gray-400 text-sm">{FREE_CAR_DURATION_DAYS} {t('store.daysFixed')}</p>
           ) : (
             <div className="grid grid-cols-2 gap-2">
               {DURATION_OPTIONS.map((d) => (
@@ -236,8 +239,8 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
                       : 'bg-[#0a0e1a] border border-[#232a3f] text-gray-400 hover:text-white'
                   }`}
                 >
-                  {d} days
-                  <span className="text-[10px] font-medium opacity-80">{(DURATION_DAILY_RATES[d] * 100).toFixed(0)}% per day</span>
+                  {d} {t('dash.days')}
+                  <span className="text-[10px] font-medium opacity-80">{(DURATION_DAILY_RATES[d] * 100).toFixed(0)}{t('store.perDayRate')}</span>
                 </button>
               ))}
             </div>
@@ -246,12 +249,12 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
 
         {/* Summary */}
         <div className="bg-[#0a0e1a] rounded-xl p-4 space-y-2.5 mb-5">
-          <SummaryRow label="Daily Rate" value={isFreeCar ? 'Fixed' : `${(dailyRate * 100).toFixed(0)}%`} valueClass="text-gray-400" />
-          <SummaryRow label="Daily Earning" value={formatCurrency(dailyPayout)} valueClass="text-emerald-400" />
-          <SummaryRow label="Total Return" value={formatCurrency(totalReturn)} valueClass="text-emerald-400 font-bold" />
-          <SummaryRow label="ROI" value={isFreeCar ? 'Starter benefit' : `${((totalReturn / invAmount) * 100).toFixed(0)}%`} valueClass="text-blue-400 font-bold" />
+          <SummaryRow label={t('store.dailyRate')} value={isFreeCar ? t('store.fixed') : `${(dailyRate * 100).toFixed(0)}%`} valueClass="text-gray-400" />
+          <SummaryRow label={t('store.dailyEarning')} value={formatCurrency(dailyPayout)} valueClass="text-emerald-400" />
+          <SummaryRow label={t('store.totalReturn')} value={formatCurrency(totalReturn)} valueClass="text-emerald-400 font-bold" />
+          <SummaryRow label="ROI" value={isFreeCar ? t('store.starterBenefit') : `${((totalReturn / invAmount) * 100).toFixed(0)}%`} valueClass="text-blue-400 font-bold" />
           <div className="border-t border-[#232a3f] pt-2.5">
-            <SummaryRow label="After Investment Balance" value={formatCurrency(balance - invAmount)} valueClass="text-white" />
+            <SummaryRow label={t('store.afterInvestmentBalance')} value={formatCurrency(balance - invAmount)} valueClass="text-white" />
           </div>
         </div>
 
@@ -266,7 +269,7 @@ function InvestmentModal({ car, onClose }: { car: CarType; onClose: () => void }
           disabled={submitting || !canAfford || (!isFreeCar && (invAmount <= 0 || !withinLimits))}
           className="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? 'Processing...' : isFreeCar ? 'Claim Free Starter Car' : `Invest ${formatCurrency(invAmount)}`}
+          {submitting ? t('store.processing') : isFreeCar ? t('store.claimFreeCar') : `${t('store.invest')} ${formatCurrency(invAmount)}`}
         </button>
       </div>
     </ModalOverlay>

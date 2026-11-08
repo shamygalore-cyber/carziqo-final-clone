@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { supabase } from '@/lib/supabase';
 import { Profile, Investment, Car, RechargeLog, WithdrawalLog, formatCurrency, formatDateShort } from '@/lib/types';
 import RechargeModal from '@/pages/user/RechargeModal';
@@ -8,6 +9,7 @@ import { Wallet, TrendingUp, ArrowUpCircle, ArrowDownCircle, Briefcase, Clock, C
 
 export default function UserDashboard() {
   const { profile, session, refreshProfile } = useAuth();
+  const { t } = useI18n();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [cars, setCars] = useState<Car[]>([]);
   const [recentRecharges, setRecentRecharges] = useState<RechargeLog[]>([]);
@@ -48,7 +50,7 @@ export default function UserDashboard() {
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-1">
             <Wallet className="w-4 h-4 text-blue-100" />
-            <p className="text-blue-100 text-sm font-medium">Available Balance</p>
+            <p className="text-blue-100 text-sm font-medium">{t('dash.availableBalance')}</p>
           </div>
           <h2 className="text-4xl font-bold tracking-tight mb-6">{formatCurrency(profile?.wallet_balance || 0)}</h2>
           <div className="grid grid-cols-2 gap-3">
@@ -57,36 +59,36 @@ export default function UserDashboard() {
               className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl py-3 font-semibold text-sm hover:bg-white/25 transition-all active:scale-95"
             >
               <ArrowDownCircle className="w-5 h-5" />
-              Recharge
+              {t('dash.recharge')}
             </button>
             <button
               onClick={() => setShowWithdraw(true)}
               className="flex items-center justify-center gap-2 bg-white/20 backdrop-blur-sm rounded-xl py-3 font-semibold text-sm hover:bg-white/25 transition-all active:scale-95"
             >
               <ArrowUpCircle className="w-5 h-5" />
-              Withdraw
+              {t('dash.withdraw')}
             </button>
           </div>
         </div>
       </div>
 
       <div className="bg-blue-500/10 border border-blue-500/30 rounded-2xl p-4">
-        <p className="text-blue-400 font-semibold text-sm">Withdrawals available</p>
-        <p className="text-gray-400 text-xs mt-1">Minimum withdrawal is ₱500.00</p>
+        <p className="text-blue-400 font-semibold text-sm">{t('dash.withdrawalsAvailable')}</p>
+        <p className="text-gray-400 text-xs mt-1">{t('dash.minWithdrawal')}</p>
       </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3">
         <StatCard
           icon={<TrendingUp className="w-5 h-5" />}
-          label="Total Earnings"
+          label={t('dash.totalEarnings')}
           value={formatCurrency(totalEarnings)}
           color="text-emerald-400"
           bg="bg-emerald-500/10"
         />
         <StatCard
           icon={<Briefcase className="w-5 h-5" />}
-          label="Active Rentals"
+          label={t('dash.activeRentals')}
           value={String(activeInvestments.length)}
           color="text-blue-400"
           bg="bg-blue-500/10"
@@ -97,7 +99,7 @@ export default function UserDashboard() {
       {activeInvestments.length > 0 && (
         <section>
           <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
-            <Briefcase className="w-4 h-4" /> Active Rentals
+            <Briefcase className="w-4 h-4" /> {t('dash.activeRentals')}
           </h3>
           <div className="space-y-3">
             {activeInvestments.slice(0, 3).map((inv) => (
@@ -109,7 +111,7 @@ export default function UserDashboard() {
 
       {/* Featured cars */}
       <section>
-        <h3 className="text-sm font-semibold text-gray-300 mb-3">Featured Cars</h3>
+        <h3 className="text-sm font-semibold text-gray-300 mb-3">{t('dash.featuredCars')}</h3>
         <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
           {cars.map((car) => (
             <div
@@ -123,7 +125,7 @@ export default function UserDashboard() {
                   <TrendingUp className="w-3 h-3 text-emerald-400" />
                   <span className="text-emerald-400 text-xs font-bold">{car.daily_return_rate}%/day</span>
                 </div>
-                <p className="text-gray-400 text-xs mt-1">{car.is_free ? 'FREE' : `From ${formatCurrency(car.price)}`}</p>
+                <p className="text-gray-400 text-xs mt-1">{car.is_free ? t('dash.free') : `${t('dash.from')} ${formatCurrency(car.price)}`}</p>
               </div>
             </div>
           ))}
@@ -132,12 +134,12 @@ export default function UserDashboard() {
 
       {/* Recent transactions */}
       <section>
-        <h3 className="text-sm font-semibold text-gray-300 mb-3">Recent Transactions</h3>
+        <h3 className="text-sm font-semibold text-gray-300 mb-3">{t('dash.recentTransactions')}</h3>
         <div className="space-y-2">
           {recentRecharges.length === 0 && recentWithdrawals.length === 0 && (
             <div className="text-center py-8 text-gray-500 text-sm">
               <Clock className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              No transactions yet
+              {t('dash.noTransactions')}
             </div>
           )}
           {recentRecharges.map((r) => (
@@ -231,7 +233,7 @@ function TransactionRow({ type, amount, status, date }: { type: 'recharge' | 'wi
           {isRecharge ? <ArrowDownCircle className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
         </div>
         <div>
-          <p className="text-white text-sm font-medium">{isRecharge ? 'Recharge' : 'Withdrawal'}</p>
+          <p className="text-white text-sm font-medium">{isRecharge ? t('profile.recharge') : t('profile.withdrawal')}</p>
           <p className="text-gray-500 text-xs">{formatDateShort(date)}</p>
         </div>
       </div>
@@ -246,14 +248,15 @@ function TransactionRow({ type, amount, status, date }: { type: 'recharge' | 'wi
 }
 
 export function StatusBadge({ status }: { status: string }) {
+  const { t } = useI18n();
   const config: Record<string, { color: string; icon: React.ReactNode; label: string }> = {
-    pending: { color: 'text-amber-400 bg-amber-500/10', icon: <Clock className="w-3 h-3" />, label: 'Pending' },
-    approved: { color: 'text-emerald-400 bg-emerald-500/10', icon: <CheckCircle className="w-3 h-3" />, label: 'Approved' },
-    rejected: { color: 'text-red-400 bg-red-500/10', icon: <XCircle className="w-3 h-3" />, label: 'Rejected' },
-    active: { color: 'text-blue-400 bg-blue-500/10', icon: <TrendingUp className="w-3 h-3" />, label: 'Active' },
-    completed: { color: 'text-emerald-400 bg-emerald-500/10', icon: <CheckCircle className="w-3 h-3" />, label: 'Completed' },
-    cancelled: { color: 'text-red-400 bg-red-500/10', icon: <XCircle className="w-3 h-3" />, label: 'Cancelled' },
-    paused: { color: 'text-amber-400 bg-amber-500/10', icon: <Clock className="w-3 h-3" />, label: 'Paused' },
+    pending: { color: 'text-amber-400 bg-amber-500/10', icon: <Clock className="w-3 h-3" />, label: t('status.pending') },
+    approved: { color: 'text-emerald-400 bg-emerald-500/10', icon: <CheckCircle className="w-3 h-3" />, label: t('status.approved') },
+    rejected: { color: 'text-red-400 bg-red-500/10', icon: <XCircle className="w-3 h-3" />, label: t('status.rejected') },
+    active: { color: 'text-blue-400 bg-blue-500/10', icon: <TrendingUp className="w-3 h-3" />, label: t('status.active') },
+    completed: { color: 'text-emerald-400 bg-emerald-500/10', icon: <CheckCircle className="w-3 h-3" />, label: t('status.completed') },
+    cancelled: { color: 'text-red-400 bg-red-500/10', icon: <XCircle className="w-3 h-3" />, label: t('status.cancelled') },
+    paused: { color: 'text-amber-400 bg-amber-500/10', icon: <Clock className="w-3 h-3" />, label: t('status.paused') },
   };
   const c = config[status] || config.pending;
   return (

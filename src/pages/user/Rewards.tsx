@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { supabase } from '@/lib/supabase';
 import { Coupon, UserCoupon, GiftItem, UserGift, DailyCheckin, formatCurrency, formatDateShort } from '@/lib/types';
 import { Gift, Ticket, GamepadIcon, CheckCircle, Calendar, Sparkles, Leaf, ArrowRight, Clock, X, Check } from 'lucide-react';
@@ -7,6 +8,7 @@ import BubbleGame from '@/components/BubbleGame';
 
 export default function Rewards() {
   const { profile, session, refreshProfile } = useAuth();
+  const { t } = useI18n();
   const [tab, setTab] = useState<'checkin' | 'game' | 'coupons' | 'gifts'>('checkin');
   const [todayCheckin, setTodayCheckin] = useState<DailyCheckin | null>(null);
   const [checkinHistory, setCheckinHistory] = useState<DailyCheckin[]>([]);
@@ -57,9 +59,9 @@ export default function Rewards() {
       const result = Array.isArray(data) ? data[0] : data;
       const r = result as { reward_amount: number; carbon_earned: number; already_claimed: boolean };
       if (r.already_claimed) {
-        setCheckinMsg({ type: 'info', text: 'You already checked in today!' });
+        setCheckinMsg({ type: 'info', text: t('rewards.alreadyCheckedToday') });
       } else {
-        setCheckinMsg({ type: 'success', text: `Check-in successful! +₱${r.reward_amount} and +${r.carbon_earned} carbon point!` });
+        setCheckinMsg({ type: 'success', text: t('rewards.checkinSuccess', { amount: String(r.reward_amount), carbon: String(r.carbon_earned) }) });
         await loadData();
         await refreshProfile();
       }
@@ -73,7 +75,7 @@ export default function Rewards() {
     if (error) {
       setActionMsg({ type: 'error', text: error.message });
     } else {
-      setActionMsg({ type: 'success', text: 'Coupon claimed! Its value has been added to your wallet.' });
+      setActionMsg({ type: 'success', text: t('rewards.couponClaimed') });
       await loadData();
       await refreshProfile();
     }
@@ -86,7 +88,7 @@ export default function Rewards() {
     if (error) {
       setActionMsg({ type: 'error', text: error.message });
     } else {
-      setActionMsg({ type: 'success', text: 'Gift redeemed! Its cash value has been added to your wallet.' });
+      setActionMsg({ type: 'success', text: t('rewards.giftRedeemed') });
       await loadData();
       await refreshProfile();
     }
@@ -113,17 +115,17 @@ export default function Rewards() {
   const carbonValue = (carbonPoints * 0.01).toFixed(2);
 
   const tabs = [
-    { id: 'checkin' as const, label: 'Check-in', icon: <Calendar className="w-4 h-4" /> },
-    { id: 'game' as const, label: 'Bubble Game', icon: <GamepadIcon className="w-4 h-4" /> },
-    { id: 'coupons' as const, label: 'Coupons', icon: <Ticket className="w-4 h-4" /> },
-    { id: 'gifts' as const, label: 'Gifts', icon: <Gift className="w-4 h-4" /> },
+    { id: 'checkin' as const, label: t('rewards.checkin'), icon: <Calendar className="w-4 h-4" /> },
+    { id: 'game' as const, label: t('rewards.bubbleGame'), icon: <GamepadIcon className="w-4 h-4" /> },
+    { id: 'coupons' as const, label: t('rewards.coupons'), icon: <Ticket className="w-4 h-4" /> },
+    { id: 'gifts' as const, label: t('rewards.gifts'), icon: <Gift className="w-4 h-4" /> },
   ];
 
   return (
     <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-1">Rewards Center</h2>
-        <p className="text-gray-400 text-sm">Earn carbon points and redeem rewards</p>
+        <h2 className="text-2xl font-bold text-white mb-1">{t('rewards.title')}</h2>
+        <p className="text-gray-400 text-sm">{t('rewards.subtitle')}</p>
       </div>
 
       {/* Carbon Points Card */}
@@ -132,11 +134,11 @@ export default function Rewards() {
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-1">
             <Leaf className="w-5 h-5 text-emerald-200" />
-            <p className="text-emerald-100 text-sm font-medium">Carbon Points Balance</p>
+            <p className="text-emerald-100 text-sm font-medium">{t('rewards.carbonBalance')}</p>
           </div>
           <h2 className="text-4xl font-bold tracking-tight mb-2">{carbonPoints}</h2>
           <div className="flex items-center gap-2 text-emerald-100 text-sm">
-            <span>Worth: </span>
+            <span>{t('rewards.worth')} </span>
             <span className="font-bold text-white">{formatCurrency(Number(carbonValue))}</span>
             <span className="text-xs">(1 pt = ₱0.01)</span>
           </div>
@@ -176,9 +178,9 @@ export default function Rewards() {
             <div className="w-20 h-20 rounded-full gradient-accent flex items-center justify-center mx-auto mb-4">
               <Calendar className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-white font-bold text-lg mb-2">Daily Check-In</h3>
-            <p className="text-gray-400 text-sm mb-1">Check in every day to earn rewards!</p>
-            <p className="text-emerald-400 text-sm font-semibold mb-4">+₱5 + 1 Carbon Point</p>
+            <h3 className="text-white font-bold text-lg mb-2">{t('rewards.dailyCheckin')}</h3>
+            <p className="text-gray-400 text-sm mb-1">{t('rewards.checkinEveryDay')}</p>
+            <p className="text-emerald-400 text-sm font-semibold mb-4">{t('rewards.checkinReward')}</p>
 
             {checkinMsg && (
               <div className={`rounded-lg px-4 py-3 text-sm mb-4 flex items-center gap-2 justify-center ${
@@ -194,14 +196,14 @@ export default function Rewards() {
               disabled={claiming || !!todayCheckin}
               className="w-full gradient-accent text-white font-bold py-4 rounded-xl transition-all hover:opacity-90 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {todayCheckin ? 'Already Checked In Today' : claiming ? 'Processing...' : 'Check In Now'}
+              {todayCheckin ? t('rewards.alreadyCheckedIn') : claiming ? t('store.processing') : t('rewards.checkInNow')}
             </button>
           </div>
 
           {/* Check-in history */}
           {checkinHistory.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">Recent Check-ins</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-3">{t('rewards.recentCheckins')}</h4>
               <div className="space-y-2">
                 {checkinHistory.map((c) => (
                   <div key={c.id} className="flex items-center justify-between bg-[#131825] rounded-lg px-4 py-3 border border-[#232a3f]">
@@ -230,21 +232,21 @@ export default function Rewards() {
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center mx-auto mb-4">
               <GamepadIcon className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-white font-bold text-lg mb-2">Bubble Pop Game</h3>
-            <p className="text-gray-400 text-sm mb-1">Tap bubbles to earn carbon points!</p>
-            <p className="text-gray-500 text-xs mb-4">15 seconds · Each bubble gives 1-5 points · One play per day</p>
+            <h3 className="text-white font-bold text-lg mb-2">{t('rewards.bubblePopGame')}</h3>
+            <p className="text-gray-400 text-sm mb-1">{t('rewards.tapBubbles')}</p>
+            <p className="text-gray-500 text-xs mb-4">{t('rewards.gameDesc')}</p>
 
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="bg-[#0a0e1a] rounded-lg p-3">
-                <p className="text-gray-500 text-xs">Duration</p>
+                <p className="text-gray-500 text-xs">{t('rewards.duration')}</p>
                 <p className="text-white font-bold">15s</p>
               </div>
               <div className="bg-[#0a0e1a] rounded-lg p-3">
-                <p className="text-gray-500 text-xs">Per Bubble</p>
+                <p className="text-gray-500 text-xs">{t('rewards.perBubble')}</p>
                 <p className="text-cyan-400 font-bold">1-5 pts</p>
               </div>
               <div className="bg-[#0a0e1a] rounded-lg p-3">
-                <p className="text-gray-500 text-xs">Value</p>
+                <p className="text-gray-500 text-xs">{t('rewards.value')}</p>
                 <p className="text-emerald-400 font-bold">₱0.01/pt</p>
               </div>
             </div>
@@ -255,7 +257,7 @@ export default function Rewards() {
               className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-4 rounded-xl transition-all hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
             >
               <GamepadIcon className="w-5 h-5" />
-              {playedToday ? 'Played Today - Come Back Tomorrow' : 'Play Now'}
+              {playedToday ? t('rewards.playedToday') : t('rewards.playNow')}
             </button>
           </div>
         </div>
@@ -265,12 +267,12 @@ export default function Rewards() {
       {tab === 'coupons' && (
         <div className="space-y-4 animate-fade-in">
           <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-            <Ticket className="w-4 h-4" /> Available Coupons
+            <Ticket className="w-4 h-4" /> {t('rewards.availableCoupons')}
           </h3>
           {coupons.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Ticket className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No coupons available</p>
+              <p className="text-sm">{t('rewards.noCoupons')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -294,7 +296,7 @@ export default function Rewards() {
                       </div>
                       <div className="text-right">
                         <p className="text-emerald-400 font-bold text-sm">{formatCurrency(Number(c.discount_value))}</p>
-                        <p className="text-gray-500 text-xs">{c.carbon_cost} carbon</p>
+                        <p className="text-gray-500 text-xs">{c.carbon_cost} {t('rewards.carbon')}</p>
                       </div>
                     </div>
                     {c.description && <p className="text-gray-400 text-xs mb-3">{c.description}</p>}
@@ -305,7 +307,7 @@ export default function Rewards() {
                         alreadyClaimed ? 'bg-emerald-500/10 text-emerald-400' : 'gradient-primary text-white hover:opacity-90'
                       }`}
                     >
-                      {alreadyClaimed ? 'Claimed' : soldOut ? 'Sold Out' : expired ? 'Expired' : !canAfford ? `Need ${c.carbon_cost} carbon` : `Claim for ${c.carbon_cost} carbon`}
+                      {alreadyClaimed ? t('rewards.claimed') : soldOut ? t('rewards.soldOut') : expired ? t('rewards.expired') : !canAfford ? t('rewards.needCarbon', { count: String(c.carbon_cost) }) : t('rewards.claimFor', { count: String(c.carbon_cost) })}
                     </button>
                   </div>
                 );
@@ -316,7 +318,7 @@ export default function Rewards() {
           {/* User's claimed coupons */}
           {userCoupons.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">Your Coupons</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-3">{t('rewards.yourCoupons')}</h4>
               <div className="space-y-2">
                 {userCoupons.map((uc) => (
                   <div key={uc.id} className="flex items-center justify-between bg-[#131825] rounded-lg px-4 py-3 border border-[#232a3f]">
@@ -347,14 +349,14 @@ export default function Rewards() {
       {tab === 'gifts' && (
         <div className="space-y-4 animate-fade-in">
           <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-            <Gift className="w-4 h-4" /> Gift List
+            <Gift className="w-4 h-4" /> {t('rewards.giftList')}
           </h3>
-          <p className="text-gray-500 text-xs">Redeem your carbon points for cash rewards</p>
+          <p className="text-gray-500 text-xs">{t('rewards.redeemCarbon')}</p>
 
           {gifts.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Gift className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">No gifts available</p>
+              <p className="text-sm">{t('rewards.noGifts')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -371,12 +373,12 @@ export default function Rewards() {
                         <div>
                           <p className="text-white font-semibold text-sm">{g.name}</p>
                           {g.description && <p className="text-gray-500 text-xs">{g.description}</p>}
-                          <p className="text-gray-500 text-xs mt-0.5">Stock: {g.stock}</p>
+                          <p className="text-gray-500 text-xs mt-0.5">{t('rewards.stock')} {g.stock}</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-emerald-400 font-bold text-sm">{formatCurrency(Number(g.cash_value))}</p>
-                        <p className="text-amber-400 text-xs">{g.carbon_cost} carbon</p>
+                        <p className="text-amber-400 text-xs">{g.carbon_cost} {t('rewards.carbon')}</p>
                       </div>
                     </div>
                     <button
@@ -384,7 +386,7 @@ export default function Rewards() {
                       disabled={!canAfford || outOfStock}
                       className="w-full text-sm font-semibold py-2.5 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed gradient-accent text-white hover:opacity-90"
                     >
-                      {outOfStock ? 'Out of Stock' : !canAfford ? `Need ${g.carbon_cost} carbon` : `Redeem for ${g.carbon_cost} carbon`}
+                      {outOfStock ? t('rewards.outOfStock') : !canAfford ? t('rewards.needCarbon', { count: String(g.carbon_cost) }) : t('rewards.redeemFor', { count: String(g.carbon_cost) })}
                     </button>
                   </div>
                 );
@@ -395,7 +397,7 @@ export default function Rewards() {
           {/* Redeemed gifts */}
           {userGifts.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-300 mb-3">Redeemed Gifts</h4>
+              <h4 className="text-sm font-semibold text-gray-300 mb-3">{t('rewards.redeemedGifts')}</h4>
               <div className="space-y-2">
                 {userGifts.map((ug) => (
                   <div key={ug.id} className="flex items-center justify-between bg-[#131825] rounded-lg px-4 py-3 border border-[#232a3f]">
@@ -405,7 +407,7 @@ export default function Rewards() {
                       </div>
                       <div>
                         <p className="text-white text-sm font-medium">{ug.name}</p>
-                        <p className="text-gray-500 text-xs">{ug.carbon_cost} carbon · {formatDateShort(ug.redeemed_at)}</p>
+                        <p className="text-gray-500 text-xs">{ug.carbon_cost} {t('rewards.carbon')} · {formatDateShort(ug.redeemed_at)}</p>
                       </div>
                     </div>
                     <div className="text-right">

@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { I18nProvider } from '@/context/I18nContext';
 import AuthPage from '@/pages/AuthPage';
 import AboutPage from '@/pages/AboutPage';
 import UserApp from '@/pages/user/UserApp';
@@ -37,7 +38,9 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <AppContent />
+        <I18nProvider>
+          <AppContent />
+        </I18nProvider>
       </AuthProvider>
     </ErrorBoundary>
   );

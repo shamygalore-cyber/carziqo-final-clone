@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { Eye, EyeOff, TrendingUp, Shield, Wallet, Gift, Info, Download } from 'lucide-react';
 
 export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
   const { signIn, signUp } = useAuth();
+  const { t } = useI18n();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -24,14 +26,14 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
       if (error) setError(error);
     } else {
       if (password.length < 6) {
-        setError('Password must be at least 6 characters');
+        setError(t('auth.passwordMinLength'));
         setSubmitting(false);
         return;
       }
       const { error } = await signUp(email, password, fullName, phone, referralCode || undefined);
       if (error) {
         if (error.includes('Database error') || error.includes('User already registered')) {
-          setError('This email is already registered. Try signing in instead.');
+          setError(t('auth.emailExists'));
         } else {
           setError(error);
         }
@@ -53,21 +55,21 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
             <img src="/carziqo.webp" alt="Carziqo.Ltd" className="w-12 h-12 rounded-xl object-cover bg-white" />
             <div>
               <h1 className="text-2xl font-bold">Carziqo.Ltd</h1>
-              <p className="text-blue-100 text-sm">Car Rental Earning Platform</p>
+              <p className="text-blue-100 text-sm">{t('auth.carRentalPlatform')}</p>
             </div>
           </div>
 
           <h2 className="text-4xl font-bold mb-4 leading-tight">
-            Invest in premium cars. <span className="text-cyan-200">Earn daily returns.</span>
+            {t('auth.investPremium')} <span className="text-cyan-200">{t('auth.earnDaily')}</span>
           </h2>
           <p className="text-blue-100 text-lg mb-12 leading-relaxed">
-            Rent luxury vehicles, earn daily profits over 30 or 60 day holding periods.
+            {t('auth.rentLuxury')}
           </p>
 
           <div className="space-y-5">
-            <FeatureRow icon={<TrendingUp className="w-5 h-5" />} title="Up to 5% daily returns" desc="Competitive rates on premium car rentals" />
-            <FeatureRow icon={<Wallet className="w-5 h-5" />} title="Flexible withdrawal" desc="Cash out your earnings anytime" />
-            <FeatureRow icon={<Shield className="w-5 h-5" />} title="Secure transactions" desc="Admin-verified payments and payouts" />
+            <FeatureRow icon={<TrendingUp className="w-5 h-5" />} title={t('auth.upToDaily')} desc={t('auth.competitiveRates')} />
+            <FeatureRow icon={<Wallet className="w-5 h-5" />} title={t('auth.flexibleWithdrawal')} desc={t('auth.cashOut')} />
+            <FeatureRow icon={<Shield className="w-5 h-5" />} title={t('auth.secureTransactions')} desc={t('auth.adminVerified')} />
           </div>
         </div>
       </div>
@@ -77,12 +79,12 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
         <div className="w-full max-w-md animate-slide-up">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">
-              {mode === 'login' ? 'Welcome back' : 'Create your account'}
+              {mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}
             </h2>
             <p className="text-gray-400">
               {mode === 'login'
-                ? 'Sign in to manage your investments'
-                : 'Start earning daily returns today'}
+                ? t('auth.signInToManage')
+                : t('auth.startEarning')}
             </p>
           </div>
 
@@ -93,7 +95,7 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
                 mode === 'login' ? 'gradient-primary text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Sign In
+              {t('auth.signIn')}
             </button>
             <button
               onClick={() => setMode('register')}
@@ -101,14 +103,14 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
                 mode === 'register' ? 'gradient-primary text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Register
+              {t('auth.register')}
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <>
-                <Field label="Full Name">
+                <Field label={t('auth.fullName')}>
                   <input
                     type="text"
                     value={fullName}
@@ -118,7 +120,7 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
                     placeholder="John Doe"
                   />
                 </Field>
-                <Field label="Phone Number">
+                <Field label={t('auth.phoneNumber')}>
                   <input
                     type="tel"
                     value={phone}
@@ -127,7 +129,7 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
                     placeholder="+1 234 567 890"
                   />
                 </Field>
-                <Field label="Referral Code (Optional)">
+                <Field label={t('auth.referralCode')}>
                   <div className="relative">
                     <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
@@ -135,14 +137,14 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
                       value={referralCode}
                       onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
                       className="input-field pl-10 uppercase"
-                      placeholder="Enter referral code"
+                      placeholder={t('auth.enterReferralCode')}
                       maxLength={6}
                     />
                   </div>
                 </Field>
               </>
             )}
-            <Field label="Email">
+            <Field label={t('auth.email')}>
               <input
                 type="email"
                 value={email}
@@ -152,7 +154,7 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
                 placeholder="you@example.com"
               />
             </Field>
-            <Field label="Password">
+            <Field label={t('auth.password')}>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -183,12 +185,12 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
               disabled={submitting}
               className="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-50 hover:shadow-lg hover:shadow-blue-500/25"
             >
-              {submitting ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
+              {submitting ? t('auth.pleaseWait') : mode === 'login' ? t('auth.signIn') : t('auth.createAccountBtn')}
             </button>
           </form>
 
           <p className="text-center text-gray-500 text-sm mt-6">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+            {t('auth.termsNotice')}
           </p>
 
           <a
@@ -197,14 +199,14 @@ export default function AuthPage({ onShowAbout }: { onShowAbout: () => void }) {
             rel="noopener noreferrer"
             className="w-full mt-6 flex items-center justify-center gap-2 gradient-accent text-white font-semibold py-3.5 rounded-xl transition-all hover:opacity-90 hover:shadow-lg hover:shadow-emerald-500/25"
           >
-            <Download className="w-5 h-5" /> Download Our App
+            <Download className="w-5 h-5" /> {t('auth.downloadApp')}
           </a>
 
           <button
             onClick={onShowAbout}
             className="w-full mt-4 flex items-center justify-center gap-2 text-gray-400 text-sm hover:text-blue-400 transition-colors"
           >
-            <Info className="w-4 h-4" /> About Carziqo.Ltd
+            <Info className="w-4 h-4" /> {t('auth.aboutCarziqo')}
           </button>
         </div>
       </div>

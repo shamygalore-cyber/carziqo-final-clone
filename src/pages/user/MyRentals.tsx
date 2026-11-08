@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Investment, formatCurrency, formatDateShort } from '@/lib/types';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
 import { StatusBadge } from '@/pages/user/UserDashboard';
 import FleetMap from '@/components/FleetMap';
 import { TrendingUp, Clock, CheckCircle, Briefcase } from 'lucide-react';
 
 export default function MyRentals() {
   const { session } = useAuth();
+  const { t } = useI18n();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
@@ -42,14 +44,14 @@ export default function MyRentals() {
 
   return (
     <div className="animate-fade-in">
-      <h2 className="text-xl font-bold text-white mb-1">My Rentals</h2>
-      <p className="text-gray-400 text-sm mb-5">Track your investment progress and earnings</p>
+      <h2 className="text-xl font-bold text-white mb-1">{t('rentals.title')}</h2>
+      <p className="text-gray-400 text-sm mb-5">{t('rentals.subtitle')}</p>
 
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3 mb-5">
-        <MiniStat label="Active" value={String(active.length)} icon={<TrendingUp className="w-4 h-4" />} color="text-blue-400" />
-        <MiniStat label="Completed" value={String(completed.length)} icon={<CheckCircle className="w-4 h-4" />} color="text-emerald-400" />
-        <MiniStat label="Total Earned" value={formatCurrency(totalEarned)} icon={<Briefcase className="w-4 h-4" />} color="text-amber-400" />
+        <MiniStat label={t('rentals.active')} value={String(active.length)} icon={<TrendingUp className="w-4 h-4" />} color="text-blue-400" />
+        <MiniStat label={t('rentals.completed')} value={String(completed.length)} icon={<CheckCircle className="w-4 h-4" />} color="text-emerald-400" />
+        <MiniStat label={t('rentals.totalEarned')} value={formatCurrency(totalEarned)} icon={<Briefcase className="w-4 h-4" />} color="text-amber-400" />
       </div>
 
       {active.length > 0 && <div className="mb-5"><FleetMap investments={active} /></div>}
@@ -64,7 +66,7 @@ export default function MyRentals() {
               filter === f ? 'gradient-primary text-white' : 'text-gray-400 hover:text-white'
             }`}
           >
-            {f}
+            {f === 'all' ? t('rentals.all') : t(`status.${f}`)}
           </button>
         ))}
       </div>
@@ -73,7 +75,7 @@ export default function MyRentals() {
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <Briefcase className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No rentals found</p>
+          <p className="text-sm">{t('rentals.noRentals')}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -110,14 +112,14 @@ function InvestmentCard({ inv }: { inv: Investment }) {
             <h3 className="text-white font-semibold text-sm truncate">{inv.car_name}</h3>
             <StatusBadge status={inv.status} />
           </div>
-          <p className="text-gray-400 text-xs mb-2">Started {formatDateShort(inv.start_date)}</p>
+          <p className="text-gray-400 text-xs mb-2">{t('rentals.started')} {formatDateShort(inv.start_date)}</p>
           <div className="flex items-center gap-3 text-xs">
             <div>
-              <span className="text-gray-500">Invested: </span>
+              <span className="text-gray-500">{t('rentals.invested')} </span>
               <span className="text-white font-semibold">{formatCurrency(Number(inv.investment_amount))}</span>
             </div>
             <div>
-              <span className="text-gray-500">Daily: </span>
+              <span className="text-gray-500">{t('rentals.daily')} </span>
               <span className="text-emerald-400 font-semibold">{formatCurrency(dailyPayout)}</span>
             </div>
           </div>
@@ -128,10 +130,10 @@ function InvestmentCard({ inv }: { inv: Investment }) {
       <div className="px-4 pb-4">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-gray-400 text-xs flex items-center gap-1">
-            <Clock className="w-3 h-3" /> {inv.days_completed} / {inv.duration_days} days
+            <Clock className="w-3 h-3" /> {inv.days_completed} / {inv.duration_days} {t('dash.days')}
           </span>
           <span className="text-gray-400 text-xs">
-            {inv.status === 'active' ? `${remaining} days left` : 'Completed'}
+            {inv.status === 'active' ? `${remaining} ${t('rentals.daysLeft')}` : t('status.completed')}
           </span>
         </div>
         <div className="w-full h-2 bg-[#232a3f] rounded-full overflow-hidden">
@@ -149,12 +151,12 @@ function InvestmentCard({ inv }: { inv: Investment }) {
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
-            <p className="text-gray-500 text-[10px]">Total Earned</p>
+            <p className="text-gray-500 text-[10px]">{t('rentals.totalEarned')}</p>
             <p className="text-emerald-400 font-bold text-sm">{formatCurrency(Number(inv.total_earned))}</p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-gray-500 text-[10px]">Expected Total</p>
+          <p className="text-gray-500 text-[10px]">{t('rentals.expectedTotal')}</p>
           <p className="text-white font-semibold text-sm">{formatCurrency(dailyPayout * inv.duration_days)}</p>
         </div>
       </div>
