@@ -283,10 +283,25 @@ export default function AdminUsers() {
         <WalletEditModal
           user={selectedUser}
           onClose={() => setShowWalletEdit(false)}
-          onSaved={() => {
+          onSaved={async () => {
             setShowWalletEdit(false);
-            loadUsers();
-            loadUserDetails({ ...selectedUser, wallet_balance: 0 });
+            await loadUsers();
+            const { data: refreshed } = await supabase.from('profiles').select('*').eq('id', selectedUser.id).single();
+            if (refreshed) {
+              setSelectedUser(refreshed as unknown as Profile);
+              const [invRes, recRes, wdRes, logRes] = await Promise.all([
+                supabase.from('investments').select('*').eq('user_id', selectedUser.id).order('created_at', { ascending: false }),
+                supabase.from('recharge_logs').select('*').eq('user_id', selectedUser.id).order('created_at', { ascending: false }).limit(10),
+                supabase.from('withdrawal_logs').select('*').eq('user_id', selectedUser.id).order('created_at', { ascending: false }).limit(10),
+                supabase.from('audit_logs').select('*').eq('user_id', selectedUser.id).order('created_at', { ascending: false }).limit(20),
+              ]);
+              setUserDetails({
+                investments: (invRes.data as unknown as Investment[]) || [],
+                recharges: (recRes.data as unknown as RechargeLog[]) || [],
+                withdrawals: (wdRes.data as unknown as WithdrawalLog[]) || [],
+                logs: (logRes.data as unknown as AuditLog[]) || [],
+              });
+            }
           }}
         />
       )}
